@@ -1,19 +1,23 @@
-# RetireWise KiwiSaver Chatbot
+# RetireWise: Personal Finance Dashboard
 
-This is a Streamlit-based financial dashboard and chatbot designed to help New Zealanders plan for retirement using KiwiSaver.
+This Streamlit app helps you track your personal finances and retirement progress. It includes:
 
-## Features
+- KiwiSaver tracking
+- Income, expenses, savings, and investments
+- Net worth and savings rate calculations
+- Retirement goal progress bar
+- Chatbot assistant for budgeting advice
 
-- 📈 KiwiSaver balance projection simulator
-- 💬 Chatbot for KiwiSaver advice, budgeting tips, and fund recommendations
-- 🏦 Provider comparison and risk profile-based fund guidance
+## How to Use
 
-## How to Run
-
-1. Clone this repo
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run the app: `streamlit run app.py`
+1. Upload a CSV file with columns: `Month`, `Income`, `Expenses`, `Savings`, `Investments`, `KiwiSaver`
+2. View charts for net worth, savings, and category breakdown
+3. Set your retirement goal and track progress
+4. Ask questions in the chatbot input box
 
 ## Deployment
 
-You can deploy this app on [Streamlit Cloud](https://streamlit.io/cloud) by connecting your GitHub repo and selecting `app.py` as the entry point.
+To deploy on Streamlit Cloud:
+- Upload `app.py`, `requirements.txt`, and `README.md` to a GitHub repo
+- Go to [Streamlit Cloud](https://streamlit.io/cloud)
+- Connect your repo and deploy using `app.py` as the entry point

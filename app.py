@@ -1,56 +1,55 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 
-st.set_page_config(page_title="RetireWise Chatbot", layout="wide")
+st.set_page_config(page_title="RetireWise Dashboard", layout="wide")
 
-st.title("💬 RetireWise: KiwiSaver Financial Chatbot")
-st.write("Welcome to your personal financial dashboard and chatbot for retirement planning in New Zealand.")
+st.title("💼 RetireWise: Personal Finance Dashboard")
 
-# Sidebar inputs
-st.sidebar.header("📊 KiwiSaver Simulator")
-current_balance = st.sidebar.number_input("Current KiwiSaver Balance", min_value=0.0, value=20000.0)
-employee_rate = st.sidebar.selectbox("Employee Contribution Rate (%)", [3, 4, 6, 8, 10], index=0)
-employer_rate = st.sidebar.selectbox("Employer Contribution Rate (%)", [3, 4, 6, 8, 10], index=0)
-annual_return = st.sidebar.slider("Expected Annual Return (%)", 2.0, 10.0, 6.0)
-years_to_retirement = st.sidebar.slider("Years Until Retirement", 1, 40, 30)
+# Sidebar for CSV upload
+st.sidebar.header("Upload Your Financial Data")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
 
-# KiwiSaver projection calculation
-def project_kiwisaver(balance, employee_rate, employer_rate, return_rate, years):
-    monthly_contribution = 6000 * (employee_rate + employer_rate) / 100 / 12
-    projected = []
-    for year in range(years + 1):
-        balance += monthly_contribution * 12
-        balance *= (1 + return_rate / 100)
-        projected.append((year, round(balance, 2)))
-    return projected
+# Sample columns expected: Month, Income, Expenses, Savings, Investments, KiwiSaver
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    df['Net Worth'] = df['Savings'] + df['Investments'] + df['KiwiSaver']
+    df['Net Savings'] = df['Income'] - df['Expenses']
 
-projection = project_kiwisaver(current_balance, employee_rate, employer_rate, annual_return, years_to_retirement)
+    st.subheader("📊 Financial Overview")
+    col1, col2 = st.columns(2)
+    with col1:
+        fig1 = px.line(df, x='Month', y='Net Worth', title='Net Worth Over Time')
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        fig2 = px.bar(df, x='Month', y='Net Savings', title='Net Savings Over Time')
+        st.plotly_chart(fig2, use_container_width=True)
 
-# Display projection
-st.subheader("📈 Projected KiwiSaver Balance")
-for year, value in projection:
-    st.write(f"Year {year}: ${value:,.2f}")
+    st.subheader("📁 Category Breakdown")
+    fig3 = px.bar(df, x='Month', y=['Income', 'Expenses', 'Savings', 'Investments', 'KiwiSaver'], 
+                  title='Monthly Financial Breakdown', barmode='group')
+    st.plotly_chart(fig3, use_container_width=True)
 
-# Chatbot logic
-st.subheader("💬 Chat with RetireWise")
-user_input = st.text_input("Ask a question about KiwiSaver, budgeting, or retirement:")
+    st.subheader("🎯 Retirement Goal Progress")
+    goal_amount = st.sidebar.number_input("Set Retirement Goal (NZD)", value=1000000)
+    final_net_worth = df['Net Worth'].iloc[-1]
+    progress = min(final_net_worth / goal_amount, 1.0)
+    st.progress(progress)
+    st.write(f"Current Net Worth: ${final_net_worth:,.2f}")
+    st.write(f"Goal: ${goal_amount:,.2f}")
 
-def respond_to_query(query):
-    query = query.lower()
-    if "contribution rate" in query:
-        return "The default KiwiSaver employee rate is 3%, but you can choose up to 10%. A 5% rate is considered adequate for most New Zealanders."
-    elif "withdraw" in query or "retire" in query:
-        return "You can withdraw your KiwiSaver savings from age 65. If you joined before July 2019, you may have a 5-year lock-in period."
-    elif "keep invested" in query:
-        return "Yes, many retirees keep their KiwiSaver invested to maintain growth and combat inflation. You can make partial or lump sum withdrawals."
-    elif "retirement income" in query or "how much do i need" in query:
-        return "A single person in a metro area with a 'No Frills' lifestyle needs about $43,000/year. NZ Super provides around $25,000/year, so KiwiSaver helps fill the gap."
-    elif "provider" in query:
-        return "Top KiwiSaver providers include Pathfinder (ethical), Simplicity (low fees), and Milford (high performance)."
-    elif "fund" in query or "risk" in query:
-        return "Conservative funds suit 2–5 year goals, Balanced for 5–10 years, Growth for 8–15 years, and Aggressive for 10+ years. Milford Active Growth has ~10.1% return."
-    else:
-        return "I'm here to help with KiwiSaver, budgeting, and retirement planning. Try asking about contribution rates, providers, or fund types."
-
-if user_input:
-    response = respond_to_query(user_input)
-    st.markdown(f"**RetireWise:** {response}")
+    st.subheader("💬 Chatbot Assistant")
+    query = st.text_input("Ask a question about your finances:")
+    if query:
+        if "reduce expenses" in query.lower():
+            top_expense_month = df.loc[df['Expenses'].idxmax()]['Month']
+            st.write(f"Your highest expenses occurred in {top_expense_month}. Consider reviewing spending that month.")
+        elif "savings rate" in query.lower():
+            savings_rate = (df['Savings'].sum() / df['Income'].sum()) * 100
+            st.write(f"Your average savings rate is {savings_rate:.2f}%. Aim for at least 20% if possible.")
+        elif "kiwisaver" in query.lower():
+            st.write("KiwiSaver contributions help grow your retirement fund. Consider increasing your rate to 6–10% for better growth.")
+        else:
+            st.write("I'm still learning! Try asking about expenses, savings rate, or KiwiSaver.")
+else:
+    st.info("Please upload a CSV file to begin.")
